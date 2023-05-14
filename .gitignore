@@ -1,7 +1,10 @@
 .idea
-*.pyc
+
 .venv
 .pdm-python
+.ruff_cache
 
 build
 dist
+
+*.pyc
