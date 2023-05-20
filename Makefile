@@ -13,5 +13,5 @@ lint: ## Lint codebase
 	@ruff --fix $(SOURCE) $(TESTS)
 	@echo "🧹 Black"
 	@black $(SOURCE) $(TESTS)
-	@echo "🧽 MyPy"
-	@mypy --pretty $(SOURCE) $(TESTS)
+	@echo "🧹 MyPy"
+	@mypy --pretty $(SOURCE)

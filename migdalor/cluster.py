@@ -17,8 +17,8 @@ class Cluster:
         node_address: NodeAddress,
         discovery: NodeDiscovery,
         update_every_secs: float = 5,
-        nodes_added_handlers: list[ClusterListener] = None,
-        nodes_removed_handlers: list[ClusterListener] = None,
+        nodes_added_handlers: Optional[list[ClusterListener]] = None,
+        nodes_removed_handlers: Optional[list[ClusterListener]] = None,
     ) -> None:
         self._node_address = node_address
         self._discovery = discovery
@@ -39,18 +39,19 @@ class Cluster:
         return list(self._other_nodes)
 
     async def start(self) -> None:
-        logger.log("starting cluster")
+        logger.info("starting cluster")
 
         self._update_nodes_task = asyncio.create_task(self._update_nodes_periodically(self._update_every_secs))
 
     async def stop(self) -> None:
-        logger.log("stopping cluster")
+        logger.info("stopping cluster")
 
         if self._update_nodes_task:
             self._update_nodes_task.cancel()
             await self._update_nodes_task
 
     async def add(self, node_address: NodeAddress) -> None:
+        """Manually add a new node to the cluster"""
         if node_address in self._other_nodes:
             return
 
@@ -59,6 +60,7 @@ class Cluster:
         await self._on_nodes_added({node_address})
 
     async def remove(self, node_address: NodeAddress) -> None:
+        """Manually remove a new node to the cluster"""
         if node_address not in self._other_nodes:
             return
 
@@ -78,20 +80,22 @@ class Cluster:
                 return
 
     async def _update_nodes(self) -> None:
-        current_all_nodes = await self._discovery.get_all_nodes()
-        current_other_nodes = current_all_nodes.remove(self._node_address)
+        current_nodes = await self._discovery.get_all_nodes()
+        current_nodes.remove(self._node_address)
 
         previous_other_nodes = self._other_nodes
 
+        logger.debug("update cluster", extra={"current": current_nodes, "previous": previous_other_nodes})
+
         logger.debug(
             "updating cluster nodes",
-            extra={"current": current_all_nodes, "prev": previous_other_nodes},
+            extra={"current": current_nodes, "prev": previous_other_nodes},
         )
 
-        added_nodes = current_all_nodes - previous_other_nodes
-        removed_nodes = previous_other_nodes - current_all_nodes
+        added_nodes = current_nodes - previous_other_nodes
+        removed_nodes = previous_other_nodes - current_nodes
 
-        self._other_nodes = current_other_nodes
+        self._other_nodes = current_nodes
 
         if added_nodes:
             await self._on_nodes_added(added_nodes)
