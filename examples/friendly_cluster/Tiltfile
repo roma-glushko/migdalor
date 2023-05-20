@@ -1,0 +1,17 @@
+docker_build(
+    'friendly-cluster/node:dev',
+    context='.',
+    dockerfile='./Dockerfile',
+    live_update=[
+        sync('./cluster/', '/app/'),
+        run('pip install -r requirements.txt', trigger=['requirements.txt']),
+    ],
+    match_in_env_vars=True,
+)
+
+k8s_yaml('deployment.yaml')
+
+k8s_resource(
+    'node',
+    labels=['friendly-cluster'],
+)
