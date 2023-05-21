@@ -38,5 +38,9 @@ make cluster-stop
 make api-docs
 ```
 
+<p align="center">
+<img src="examples/party_cluster/docs/party-cluster-node-api.png" width="100%" alt="The Party Cluster - An example of using Migdalor to implement peer discovery in Kubernetes cluster" />
+</p>
+
 Additionally, you can find a Postman API collection in the `docs` directory.
 
