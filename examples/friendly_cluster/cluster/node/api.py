@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, status, Request
+from fastapi import FastAPI, status
 
-from cluster.node.entities import DiscoveryRequest, NodeList
+from cluster.node.entities import DiscoveryRequest, NodeList, MoodResponse, CatchupResponse
 from cluster.node.friends import FriendsManager
 from cluster.node.config import config
+from cluster.node.mood import MoodManager
 
-manager = FriendsManager(
+mood = MoodManager()
+friends = FriendsManager(
     node_address=(config.node_ip, config.port),
     cluster_address=(config.cluster_hostname, config.port),
 )
@@ -13,9 +15,11 @@ manager = FriendsManager(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await manager.start()
+    await friends.start()
+    await mood.start()
     yield
-    await manager.stop()
+    await friends.stop()
+    await mood.stop()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -23,21 +27,26 @@ app = FastAPI(lifespan=lifespan)
 
 @app.post("/hey/", status_code=status.HTTP_202_ACCEPTED)
 async def hey_from_other_node(request: DiscoveryRequest) -> None:
-    await manager.add_friend(request.node)
+    await friends.add_friend(request.node)
 
 
-@app.post("/catchUp/", status_code=status.HTTP_202_ACCEPTED)
-async def catchup_with_all_nodes() -> None:
-    await manager.greet_friends()
+@app.get("/catchUp/", status_code=status.HTTP_202_ACCEPTED)
+async def catchup_with_all_nodes() -> CatchupResponse:
+    return CatchupResponse(moods=await friends.catchup())
 
 
 @app.post("/bye/", status_code=status.HTTP_202_ACCEPTED)
 async def bye_from_other_node(request: DiscoveryRequest) -> None:
-    await manager.remove_friend(request.node)
+    await friends.remove_friend(request.node)
+
+
+@app.get("/mood/", status_code=status.HTTP_200_OK)
+async def get_mood() -> MoodResponse:
+    return MoodResponse(mood=mood.current_mood)
 
 
 @app.get("/friends/")
-async def list_all_active_nodes(request: Request) -> NodeList:
+async def list_all_active_nodes() -> NodeList:
     return NodeList(
-        nodes=manager.friends,
+        nodes=friends.friends,
     )

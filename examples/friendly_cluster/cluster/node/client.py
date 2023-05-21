@@ -1,6 +1,6 @@
 import httpx
 
-from cluster.node.entities import DiscoveryRequest
+from cluster.node.entities import DiscoveryRequest, MoodResponse
 from migdalor import NodeAddress
 from migdalor.logger import logger
 
@@ -35,6 +35,14 @@ class NodeClient:
             logger.debug(f"({current_node_address}) friend node byed ({self._node_ip}:{self._node_ip})")
         else:
             logger.warning(
-                f"({current_node_address}) error happened while byed a friend node "
+                f"{current_node_address} error happened while byed a friend node "
                 f"({self._node_ip}:{self._node_ip}): {response.content}"
             )
+
+    async def mood(self) -> str:
+        response = await self._client.get("/mood/")
+
+        if response.status_code != 200:
+            logger.warning(f"could not get friend node mood ({self._node_ip}:{self._node_ip}): {response.content}")
+
+        return MoodResponse(**response.json()).mood

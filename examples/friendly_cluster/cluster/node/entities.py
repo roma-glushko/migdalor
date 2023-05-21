@@ -9,3 +9,11 @@ class DiscoveryRequest(BaseModel):
 
 class NodeList(BaseModel):
     nodes: list[migdalor.NodeAddress]
+
+
+class MoodResponse(BaseModel):
+    mood: str
+
+
+class CatchupResponse(BaseModel):
+    moods: dict[str, str]

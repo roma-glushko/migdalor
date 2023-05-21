@@ -49,6 +49,19 @@ class FriendsManager:
 
         logger.info(f"({self._cluster.current_node}) byed friend nodes ({self._cluster.other_nodes})")
 
+    async def catchup(self) -> dict[str, str]:
+        moods: dict[str, str] = {}
+
+        for node_ip, port in self._cluster.other_nodes:
+            try:
+                client = NodeClient(node_ip=node_ip, port=port)
+
+                moods[node_ip] = await client.mood()
+            except httpx.ConnectError:
+                logger.warning(f"{self._cluster.current_node} {node_ip}:{port} node was shut down already")
+
+        return moods
+
     async def add_friend(self, node: migdalor.NodeAddress) -> None:
         await self._cluster.add(node)
 
