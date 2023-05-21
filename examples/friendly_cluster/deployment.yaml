@@ -34,7 +34,7 @@ spec:
       containers:
         - name: node
           image: friendly-cluster/node:dev
-          command: ["uvicorn", "cluster.node.api:app", "--reload", "--port", "8888"]
+          command: ["uvicorn", "cluster.node.api:app", "--reload", "--host", "0.0.0.0", "--port", "8888"]
           ports:
             - containerPort: 8888
           env:

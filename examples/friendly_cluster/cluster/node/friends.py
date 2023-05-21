@@ -4,7 +4,7 @@ from typing import Optional
 import httpx as httpx
 
 import migdalor
-from cluster.node.entities import DiscoveryRequest
+from cluster.node.client import NodeClient
 from cluster.node.logger import logger
 
 
@@ -25,40 +25,25 @@ class FriendsManager:
         return self._cluster.other_nodes + [self._cluster.current_node]
 
     async def greet_friends(self) -> None:
-        for (node_ip, port) in self._cluster.other_nodes:
+        for node_ip, port in self._cluster.other_nodes:
             try:
-                client = httpx.AsyncClient(base_url=f"http://{node_ip}:{port}")
+                client = NodeClient(node_ip=node_ip, port=port)
 
-                response = await client.post(
-                    "/hey/",
-                    data=DiscoveryRequest(node=self._cluster.current_node).dict(),
-                )
-
-                if response.status_code == 202:
-                    logger.debug(f"{self._cluster.current_node} friend node greeted ({node_ip}:{port})")
-                else:
-                    logger.warning(
-                        f"{self._cluster.current_node} error happened while greeted a friend node ({node_ip}:{port}): {response.content}")
+                await client.hey(current_node_address=self._cluster.current_node)
             except httpx.ConnectError:
-                logger.warning(f"{self._cluster.current_node} could not greet a friend node ({node_ip}:{port}), the node is still starting up")
+                logger.warning(
+                    f"{self._cluster.current_node} could not greet a friend node ({node_ip}:{port}),"
+                    f" the node is still starting up"
+                )
 
         logger.info(f"({self._cluster.current_node}) greeted friend nodes ({self._cluster.other_nodes})")
 
     async def bye_friends(self) -> None:
-        for (node_ip, port) in self._cluster.other_nodes:
+        for node_ip, port in self._cluster.other_nodes:
             try:
-                client = httpx.AsyncClient(base_url=f"http://{node_ip}:{port}")
+                client = NodeClient(node_ip=node_ip, port=port)
 
-                response = await client.post(
-                    "/bye/",
-                    data=DiscoveryRequest(node=self._cluster.current_node).dict(),
-                )
-
-                if response.status_code == 202:
-                    logger.debug(f"({self._cluster.current_node}) friend node byed ({node_ip}:{port})")
-                else:
-                    logger.warning(
-                        f"({self._cluster.current_node}) error happened while byed a friend node ({node_ip}:{port}): {response.content}")
+                await client.bye(current_node_address=self._cluster.current_node)
             except httpx.ConnectError:
                 logger.warning(f"{self._cluster.current_node} {node_ip}:{port} node was shut down already")
 
