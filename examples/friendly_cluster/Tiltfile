@@ -3,7 +3,7 @@ docker_build(
     context='.',
     dockerfile='./Dockerfile',
     live_update=[
-        sync('./cluster/', '/app/'),
+        sync('./cluster/', '/src/cluster/'),
         run('pip install -r requirements.txt', trigger=['requirements.txt']),
     ],
     match_in_env_vars=True,

@@ -1,4 +1,9 @@
-import os
+from pydantic import BaseSettings, Field
 
-NODE_IP = os.environ["NODE_IP"]
-CLUSTER_HOSTNAME = os.environ["CLUSTER_HOSTNAME"]
+
+class Config(BaseSettings):
+    node_ip: str = Field(env="NODE_IP")
+    cluster_address: str = Field(env="CLUSTER_HOSTNAME")
+
+
+config = Config()

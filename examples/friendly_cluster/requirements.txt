@@ -1,2 +1,3 @@
 fastapi==0.95.2
 uvicorn[standard]==0.22.0
+migdalor==0.0.2.dev0

@@ -55,7 +55,26 @@ metadata:
     app.kubernetes.io/component: node
 spec:
   type: ClusterIP
-  clusterIP: None
+  clusterIP: None  # "clusterIP: None" makes this service a headless which is crutial for the peer discovery
+  selector:
+    app.kubernetes.io/part-of: friendly-cluster
+    app.kubernetes.io/component: node
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+---
+# A regular ClusterIP service to be able to send HTTP requests to the cluster's nodes
+apiVersion: v1
+kind: Service
+metadata:
+  name: node
+  namespace: friendly-cluster
+  labels:
+    app.kubernetes.io/part-of: friendly-cluster
+    app.kubernetes.io/component: node
+spec:
+  type: ClusterIP
   selector:
     app.kubernetes.io/part-of: friendly-cluster
     app.kubernetes.io/component: node
