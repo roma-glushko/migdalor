@@ -1,7 +1,7 @@
 
 [project]
 name = "migdalor"
-version = "0.0.2.dev9"
+version = "0.0.2"
 description = "A cluster membership library for modern asyncio Python distributed systems running in Kubernetes"
 authors = [
     {name = "Roman Glushko", email = "roman.glushko.m@gmail.com"},
