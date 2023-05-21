@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "893cfcde-278c-4048-8097-8e210621e0c6",
-		"name": "Friendly Cluster",
+		"name": "The Party Cluster",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "4735365"
 	},
@@ -33,7 +33,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"node\": \"127.0.0.1\"\n}",
+					"raw": "{\n    \"node\": (\"127.0.0.1\", 8888),\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -56,13 +56,33 @@
 			"response": []
 		},
 		{
+			"name": "Catch Up with All Friends",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8888/catchUp/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"catchUp",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Leave the Cluster",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"node\": \"127.0.0.1\"\n}",
+					"raw": "{\n    \"node\": [\"127.0.0.1\", 8888]\n}",
 					"options": {
 						"raw": {
 							"language": "json"

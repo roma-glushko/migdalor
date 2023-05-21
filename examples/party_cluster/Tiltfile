@@ -1,5 +1,5 @@
 docker_build(
-    'friendly-cluster/node:dev',
+    'party-cluster/node:dev',
     context='.',
     dockerfile='./Dockerfile',
     live_update=[
@@ -13,6 +13,6 @@ k8s_yaml('deployment.yaml')
 
 k8s_resource(
     'node',
-    labels=['friendly-cluster'],
+    labels=['party-cluster'],
     port_forwards=["8888:8888"]
 )

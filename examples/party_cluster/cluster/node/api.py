@@ -22,8 +22,11 @@ async def lifespan(app: FastAPI):
     await mood.stop()
 
 
-app = FastAPI(lifespan=lifespan)
-
+app = FastAPI(
+    title="The Party Cluster",
+    description="An example of using Migdalor to implement peer discovery in Kubernetes cluster",
+    lifespan=lifespan,
+)
 
 @app.post("/hey/", status_code=status.HTTP_202_ACCEPTED)
 async def hey_from_other_node(request: DiscoveryRequest) -> None:

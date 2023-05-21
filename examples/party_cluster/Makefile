@@ -1,11 +1,11 @@
-CLUSTER?=friendly-cluster
+CLUSTER?=party-cluster
 REGISTRY_PORT?=8800
 SOURCE?=cluster
 
 .PHONY: help
 
 help:
-	@echo "🔆 Friendly Cluster - An Example of Using Migdalor in Kubernetes cluster to bring peer discovery on"
+	@echo "🔆 Party Cluster - An Example of Using Migdalor in Kubernetes cluster to bring peer discovery on"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 cluster-start:  ## Start the cluster
@@ -23,7 +23,7 @@ start: cluster-ctx ## Start the whole system
 	@tilt up
 
 image-build: ## Build the image
-	@docker build -t friendly-cluster/node:dev -f Dockerfile .
+	@docker build -t party-cluster/node:dev -f Dockerfile .
 
 lint: ## Lint source code
 	@black $(SOURCE)
