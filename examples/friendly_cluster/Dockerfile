@@ -1,4 +1,4 @@
-FROM python:3.10.11-alpine3.16 as base
+FROM python:3.11.3-alpine3.16 as base
 
 ENV PYTHONPATH="/src/:$PYTHONPATH"
 

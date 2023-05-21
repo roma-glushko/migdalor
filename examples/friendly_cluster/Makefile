@@ -26,6 +26,9 @@ image-build: ## Build the image
 	@docker build -t friendly-cluster/node:dev -f Dockerfile .
 
 lint: ## Lint source code
-	@poetry run black $(SOURCE)
-	@poetry run ruff --fix $(SOURCE)
-	@poetry run mypy --pretty $(SOURCE)
+	@black $(SOURCE)
+	@ruff --fix $(SOURCE)
+	@mypy --pretty $(SOURCE)
+
+api-docs: ## Open Friendly Cluster API specification (OpenAPI)
+	@open http://localhost:8888/docs#/
