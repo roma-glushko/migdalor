@@ -26,6 +26,7 @@ class Cluster:
 
         self._other_nodes: set[NodeAddress] = set()
         self._update_nodes_task: Optional[asyncio.Task] = None
+        self._nodes_updated = asyncio.Condition()
 
         self._nodes_added_handlers = nodes_added_handlers or []
         self._nodes_removed_handlers = nodes_removed_handlers or []
@@ -37,6 +38,10 @@ class Cluster:
     @property
     def other_nodes(self) -> list[NodeAddress]:
         return list(self._other_nodes)
+
+    @property
+    def nodes_updated(self) -> asyncio.Condition:
+        return self._nodes_updated
 
     async def start(self) -> None:
         logger.info("starting cluster")
@@ -74,14 +79,21 @@ class Cluster:
 
         while True:
             try:
-                await self._update_nodes()
                 await asyncio.sleep(updates_every_secs)
+                await self._update_nodes()
             except asyncio.CancelledError:
+                logger.debug("update cluster task canceled")
                 return
 
     async def _update_nodes(self) -> None:
         current_nodes = await self._discovery.get_all_nodes()
-        current_nodes.remove(self._node_address)
+
+        try:
+            current_nodes.remove(self._node_address)
+        except KeyError:
+            # if self IP is not on the list, then it's fine
+            # there is no guarantees that, for example, Kubernetes would update its DNS before the node is starting up
+            ...
 
         previous_other_nodes = self._other_nodes
 
@@ -95,7 +107,9 @@ class Cluster:
         added_nodes = current_nodes - previous_other_nodes
         removed_nodes = previous_other_nodes - current_nodes
 
-        self._other_nodes = current_nodes
+        async with self._nodes_updated:
+            self._other_nodes = current_nodes
+            self._nodes_updated.notify_all()
 
         if added_nodes:
             await self._on_nodes_added(added_nodes)

@@ -1,14 +1,15 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status, Request
-from pydantic import BaseModel
 
-import migdalor
+from cluster.node.entities import DiscoveryRequest, NodeList
 from cluster.node.friends import FriendsManager
 from cluster.node.config import config
 
 manager = FriendsManager(
-    node_address=(config.node_ip, config.port), cluster_address=(config.cluster_hostname, config.port)
+    node_address=(config.node_ip, config.port),
+    cluster_address=(config.cluster_hostname, config.port),
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,22 +21,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-class DiscoveryRequest(BaseModel):
-    node: migdalor.NodeAddress
-
-
-class NodeList(BaseModel):
-    nodes: list[migdalor.NodeAddress]
-
 
 @app.post("/hey/", status_code=status.HTTP_202_ACCEPTED)
-async def hey_from_other_node(request: DiscoveryRequest):
-    return None
+async def hey_from_other_node(request: DiscoveryRequest) -> None:
+    await manager.add_friend(request.node)
 
 
 @app.post("/bye/", status_code=status.HTTP_202_ACCEPTED)
-async def bye_from_other_node(request: DiscoveryRequest):
-    return None
+async def bye_from_other_node(request: DiscoveryRequest) -> None:
+    await manager.remove_friend(request.node)
 
 
 @app.get("/friends/")

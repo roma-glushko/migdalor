@@ -1,8 +1,10 @@
 import asyncio
 import socket
 
-RawNodeAddress = tuple[socket.AddressFamily, socket.SocketKind, str, int, tuple[str, int]]
+from migdalor.logger import logger
+
 NodeAddress = tuple[str, int]
+RawNodeAddress = tuple[socket.AddressFamily, socket.SocketKind, int, str, NodeAddress]
 
 
 class NodeDiscovery:
@@ -28,7 +30,9 @@ class KubernetesServiceDiscovery(NodeDiscovery):
             type=socket.SOCK_STREAM,
         )
 
-        return {(ip, port) for _, _, ip, port, _ in raw_node_addresses}
+        logger.debug(f"raw node addresses ({raw_node_addresses})")
+
+        return {address for _, _, _, _, address in raw_node_addresses}
 
 
 class StaticDiscovery(NodeDiscovery):

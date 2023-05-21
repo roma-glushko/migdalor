@@ -1,4 +1,10 @@
+import asyncio
+from typing import Optional
+
+import httpx as httpx
+
 import migdalor
+from cluster.node.entities import DiscoveryRequest
 from cluster.node.logger import logger
 
 
@@ -9,22 +15,91 @@ class FriendsManager:
             discovery=migdalor.KubernetesServiceDiscovery(service_address=cluster_address),
             nodes_added_handlers=[self._on_nodes_added],
             nodes_removed_handlers=[self._on_nodes_removed],
+            update_every_secs=10,
         )
+
+        self._greet_task: Optional[asyncio.Task] = None
 
     @property
     def friends(self) -> list[migdalor.NodeAddress]:
         return self._cluster.other_nodes + [self._cluster.current_node]
 
+    async def greet_friends(self) -> None:
+        for (node_ip, port) in self._cluster.other_nodes:
+            try:
+                client = httpx.AsyncClient(base_url=f"http://{node_ip}:{port}")
+
+                response = await client.post(
+                    "/hey/",
+                    data=DiscoveryRequest(node=self._cluster.current_node).dict(),
+                )
+
+                if response.status_code == 202:
+                    logger.debug(f"{self._cluster.current_node} friend node greeted ({node_ip}:{port})")
+                else:
+                    logger.warning(
+                        f"{self._cluster.current_node} error happened while greeted a friend node ({node_ip}:{port}): {response.content}")
+            except httpx.ConnectError:
+                logger.warning(f"{self._cluster.current_node} could not greet a friend node ({node_ip}:{port}), the node is still starting up")
+
+        logger.info(f"({self._cluster.current_node}) greeted friend nodes ({self._cluster.other_nodes})")
+
+    async def bye_friends(self) -> None:
+        for (node_ip, port) in self._cluster.other_nodes:
+            try:
+                client = httpx.AsyncClient(base_url=f"http://{node_ip}:{port}")
+
+                response = await client.post(
+                    "/bye/",
+                    data=DiscoveryRequest(node=self._cluster.current_node).dict(),
+                )
+
+                if response.status_code == 202:
+                    logger.debug(f"({self._cluster.current_node}) friend node byed ({node_ip}:{port})")
+                else:
+                    logger.warning(
+                        f"({self._cluster.current_node}) error happened while byed a friend node ({node_ip}:{port}): {response.content}")
+            except httpx.ConnectError:
+                logger.warning(f"{self._cluster.current_node} {node_ip}:{port} node was shut down already")
+
+        logger.info(f"({self._cluster.current_node}) byed friend nodes ({self._cluster.other_nodes})")
+
+    async def add_friend(self, node: migdalor.NodeAddress) -> None:
+        await self._cluster.add(node)
+
+    async def remove_friend(self, node: migdalor.NodeAddress) -> None:
+        await self._cluster.remove(node)
+
     async def start(self) -> None:
-        logger.info(f"node is starting up ({self._cluster.current_node})")
+        logger.info(f"({self._cluster.current_node}) node is starting up")
+
+        self._greet_task = asyncio.create_task(self._greet_friends_in_background())
         await self._cluster.start()
 
     async def stop(self) -> None:
-        logger.info(f"node is shutting down ({self._cluster.current_node})")
+        logger.info(f"{self._cluster.current_node} node is shutting down")
         await self._cluster.stop()
+        await self.bye_friends()
+
+        if self._greet_task:
+            self._greet_task.cancel()
+            await self._greet_task
+
+    async def _greet_friends_in_background(self) -> None:
+        """
+        Greet friends in background to unblock API server startup. Otherwise, it would end up in a deadlock
+        """
+        logger.info(f"{self._cluster.current_node} waiting for a friend list update")
+
+        async with self._cluster.nodes_updated:
+            await self._cluster.nodes_updated.wait()
+
+        logger.info(f"{self._cluster.current_node} friend list updated")
+
+        await self.greet_friends()
 
     async def _on_nodes_added(self, nodes: set[migdalor.NodeAddress]) -> None:
-        logger.info(f"nodes added ({nodes})")
+        logger.info(f"{self._cluster.current_node} nodes added ({nodes})")
 
     async def _on_nodes_removed(self, nodes: set[migdalor.NodeAddress]) -> None:
-        logger.info(f"nodes removed ({nodes})")
+        logger.info(f"{self._cluster.current_node} nodes removed ({nodes})")

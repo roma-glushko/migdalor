@@ -2,6 +2,10 @@
 
 An example of using Migdalor in Kubernetes cluster to implement peer discovery.
 
+```bash
+kubectl -n friendly-cluster scale --replicas=5 deployment node
+```
+
 ## Getting Started
 
 In order to start the application, you need to have k3d and Tilt installed locally.
