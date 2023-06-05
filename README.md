@@ -6,7 +6,7 @@
 
 Migdalor is a cluster membership library for modern asyncio Python distributed systems running in Kubernetes.
 
-Migdalor doesn't require a separate broker (e.g. Redis, etcd, Zookeeper, Chabby, etc) to work, but leverage Kubernetes out-of-the-box capabilities
+Migdalor doesn't require a separate broker (e.g. Redis, etcd, Zookeeper, Chubby, etc) to work, but leverage Kubernetes out-of-the-box capabilities
 to solve the peer discovery problem.
 
 ## Features
